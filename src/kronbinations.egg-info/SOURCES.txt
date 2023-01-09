@@ -1,0 +1,11 @@
+LICENSE
+README.md
+setup.cfg
+setup.py
+src/kronbinations/__init__.py
+src/kronbinations/kronbinations.py
+src/kronbinations.egg-info/PKG-INFO
+src/kronbinations.egg-info/SOURCES.txt
+src/kronbinations.egg-info/dependency_links.txt
+src/kronbinations.egg-info/requires.txt
+src/kronbinations.egg-info/top_level.txt
