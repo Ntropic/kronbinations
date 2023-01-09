@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: kronbinations
-Version: 1.2
+Version: 0.1
 Summary: kronbinations is used to remove nested loops and perform parameter sweeps.
 Home-page: https://github.com/Ntropic/kronbinations/archive/refs/tags/v0.1.tar.gz
 Author: Michael Schilling
