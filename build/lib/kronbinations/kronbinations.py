@@ -12,7 +12,7 @@ class kronbinations():
         # If values is a dictionary, also store the keys, so that change can be outputted by key
         if isinstance(values[0], dict):
             if len(values) > 1:
-                raise VariableError('If values is a dictionary, it must be the only argument')
+                raise ValueError('If values is a dictionary, it must be the only argument')
             self.keys = list(values[0].keys())
             values = list(values[0].values())
             self.return_as_dict = True
@@ -160,10 +160,7 @@ class kronbinations():
 
     def value(self, elem=None):
         if elem is None:
-            if self.return_as_dict:
-                return dict(zip(self.keys, self.last_values))
-            else:
-                return self.last_values
+            return self.last_values
         elif isinstance(elem, int):
             return self.last_values[elem]
         elif isinstance(elem, str):
