@@ -69,7 +69,7 @@ def test_krombinations_settings_and_changes_to_them():
     assert do_tqdm
     assert not return_as_dict
     k.set(do_index=False, do_change=False, do_tqdm=False, return_as_dict=False)
-    do_index, do_change, do_tqdm, return_as_dict = k.get('do_index', 'do_change', 'do_tqdm', 'return_as_dict')
+    do_index, do_change, do_tqdm, return_as_dict = k.get('index', 'do_change', 'do_tqdm', 'return_as_dict')
     assert not do_index
     assert not do_change
     assert not do_tqdm
@@ -95,7 +95,10 @@ def test_kronbinations_dict_objects():
     # Create a kronbinations object
     # with the lists as a dictionary
     keys = ['floats', 'ints', 'strings']
-    k = kronbinations({'floats': floats, 'ints': ints, 'strings': strings})
+    d = {'floats': floats, 'ints': ints, 'strings': strings}
+    k = kronbinations(d)
+    with pytest.raises(ValueError):
+        k = kronbinations(d, d)
     for i,v,c in k.kronprod(index=True, change=True, progress=False):
         for key in keys:
             assert k.changed(key) == c[key]

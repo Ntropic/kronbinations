@@ -1,0 +1,11 @@
+{
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+        "-v",
+        "--cov=kronbinations/",
+        "--cov-report=lcov:./coverage/lcov.info",
+        "--pdb",
+        "test/"
+    ]
+}
