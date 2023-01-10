@@ -1,4 +1,5 @@
 # kronbinations
+[![Python package](https://github.com/Ntropic/kronbinations/actions/workflows/python-package.yml/badge.svg)](https://github.com/Ntropic/kronbinations/actions/workflows/python-package.yml)
 
 Install via 
 `pip install kronbinations`
