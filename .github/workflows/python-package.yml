@@ -32,9 +32,9 @@ jobs:
     - name: Test with pytest
       run: |
         pip install pytest pytest-cov
-        python -m pytest --cov=./myapp --cov-report coverage.xml
+        python -m pytest --cov=./myapp --cov-report lcov
     - name: Coveralls
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: coverage.xml
+
