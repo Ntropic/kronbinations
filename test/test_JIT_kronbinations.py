@@ -17,7 +17,7 @@ def test_kronbinations_matrices():
             A[i] = v[0]+v[1]+i[2]
             B[i] = v[0]-v[1]
         return A, B
-    k = JIT_kronbinations(floats, ints, strings, func=fun)
+    k = JIT_kronbinations(floats, ints, strings, func=fun, redo=False)
     assert k.size == 125
     assert k.shape == (5,5,5)
     assert k.ndim == 3
@@ -41,16 +41,16 @@ def test_kronbinations_loop_outputs():
             if how_many == 0:
                 how_many = 2 # elements of the values tuple - 1
                 def funny(k, A):
-                    for output in k.kronprod(index=index, change=change, progress=False, redo=False):
+                    for output in k.kronprod(index=index, change=change, progress=False):
                         assert len(output) == how_many+1
-                k = JIT_kronbinations(floats, ints, strings, func=funny)
+                k = JIT_kronbinations(floats, ints, strings, func=funny, redo=False)
                 A = k.zeros()
                 k.calculate_all()
-
+                
 def test_krombinations_intermediate_outputs():
     # Check the intermediate outputs
     def funny(k, A):
-        for i,v,c in k.kronprod(index=True, change=True, progress=False, redo=False):
+        for i,v,c in k.kronprod(index=True, change=True, progress=False):
             assert k.changed() == c
             assert k.index() == i # works since switching to tuples
             assert k.value() == v
@@ -58,8 +58,8 @@ def test_krombinations_intermediate_outputs():
                 assert k.changed(j) == c[j]
                 assert k.index(j) == i[j]
                 assert k.value(j) == v[j]
-    k = JIT_kronbinations(floats, ints, strings, func=funny)
-    A = k.zeros()
+    k = JIT_kronbinations(floats, ints, strings, func=funny, redo=False)
+    k.zeros()
     k.calculate_all()
 
 def test_krombinations_settings_and_changes_to_them():
@@ -79,25 +79,25 @@ def test_krombinations_settings_and_changes_to_them():
     assert not do_index
     assert not do_change
     assert not do_tqdm
-
+    
 def test_kronbinations_illegal_dict_outputs():
     # Check the illegal dictionary outputs
     def funny(k, A):
-        for i,v,c in k.kronprod(index=True, change=True, progress=False, redo=False):
+        for i,v,c in k.kronprod(index=True, change=True, progress=False):
             k.index('floats')
-    k = JIT_kronbinations(floats, ints, strings, func=funny)
+    k = JIT_kronbinations(floats, ints, strings, func=funny, redo=False)
     k.empty()
     
     def funny2(k, A):
-        for i,v,c in k.kronprod(index=True, change=True, progress=False, redo=False):
+        for i,v,c in k.kronprod(index=True, change=True, progress=False):
             k.value('floats')
-    k2 = JIT_kronbinations(floats, ints, strings, func=funny2)
+    k2 = JIT_kronbinations(floats, ints, strings, func=funny2, redo=False)
     k2.empty()
     
     def funny3(k, A):
-        for i,v,c in k.kronprod(index=True, change=True, progress=False, redo=False):
+        for i,v,c in k.kronprod(index=True, change=True, progress=False):
             k.changed('floats')
-    k3 = JIT_kronbinations(floats, ints, strings, func=funny3)
+    k3 = JIT_kronbinations(floats, ints, strings, func=funny3, redo=False)
     k3.empty()
     
     with pytest.raises(ValueError):
@@ -113,14 +113,13 @@ def test_kronbinations_dict_objects():
     keys = ['floats', 'ints', 'strings']
     d = {'floats': floats, 'ints': ints, 'strings': strings}
     def funny(k, A):
-        for i,v,c in k.kronprod(index=True, change=True, progress=False, redo=False):
+        for i,v,c in k.kronprod(index=True, change=True, progress=False):
             for j, key in enumerate(keys):
                 assert k.changed(key) == c[key]
                 assert k.index(key) == i[j]
                 assert k.value(key) == v[key]
     with pytest.raises(ValueError):
-        k = JIT_kronbinations(d, d, func=funny)
-    k = JIT_kronbinations(d, func=funny)
+        k = JIT_kronbinations(d, d, func=funny, redo=False)
+    k = JIT_kronbinations(d, func=funny, redo=False)
     k.empty()
     k.calculate_all()
-
