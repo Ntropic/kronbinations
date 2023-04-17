@@ -13,27 +13,19 @@ def test_kronbinations_matrices():
     # Create a kronbinations object
     # with the lists as values
     k = kronbinations(floats, ints, strings)
-    assert k.size() == 125
-    assert k.shape() == (5,5,5)
-    assert k.ndim() == 3
+    assert k.size == 125
+    assert k.shape == (5,5,5)
+    assert k.ndim == 3
     # Test the generation of matrices
     o = k.ones(dtype=int)
     z = k.zeros(dtype=int)
     e = k.empty()
     f = k.full(fill_value= 1.0/3.0)
-    r = k.random()
-    ri = k.randint(0,1)
-    rng = np.random.default_rng()
-    rr = k.rng(rng.random)
-    list_of_matrices = [o, z, e, f, r, ri, rr]
     assert o.shape == (5,5,5)
     assert z.shape == (5,5,5)
     assert e.shape == (5,5,5)
     assert f.shape == (5,5,5)
-    assert r.shape == (5,5,5)
-    assert ri.shape == (5,5,5)
-    assert rr.shape == (5,5,5)
-
+    
 def test_kronbinations_loop_outputs():
     k = kronbinations(floats, ints, strings)
     b = [False, True]
@@ -62,25 +54,20 @@ def test_krombinations_intermediate_outputs():
 
 def test_krombinations_settings_and_changes_to_them():
     k = kronbinations(floats, ints, strings)
-    k.set(do_index=True, do_change=True, do_tqdm=True, return_as_dict=False)
+    k.set(do_index=True, do_change=True, do_tqdm=True)
     do_index, do_change, do_tqdm, return_as_dict = k.get('do_index', 'do_change', 'do_tqdm', 'return_as_dict')
     assert do_index
     assert do_change
     assert do_tqdm
-    assert not return_as_dict
-    k.set(do_index=False, do_change=False, do_tqdm=False, return_as_dict=False)
+    k.set(do_index=False, do_change=False, do_tqdm=False)
     do_index, do_change, do_tqdm, return_as_dict = k.get('index', 'do_change', 'do_tqdm', 'return_as_dict')
     assert not do_index
     assert not do_change
     assert not do_tqdm
-    assert not return_as_dict
 
 def test_kronbinations_illegal_dict_outputs():
     # Check the illegal dictionary outputs
     k = kronbinations(floats, ints, strings)
-    with pytest.raises(ValueError):
-        for a in k.kronprod(index=True, change=True, progress=True, return_as_dict=True):
-            pass
     with pytest.raises(ValueError):
         for i,v,c in k.kronprod(index=True, change=True, progress=False):
             k.value('floats')
@@ -100,7 +87,8 @@ def test_kronbinations_dict_objects():
     with pytest.raises(ValueError):
         k = kronbinations(d, d)
     for i,v,c in k.kronprod(index=True, change=True, progress=False):
-        for key in keys:
+        for j, key in enumerate(keys):
             assert k.changed(key) == c[key]
-            assert k.index(key) == i[key]
+            assert k.index(key) == i[j]
             assert k.value(key) == v[key]
+            

@@ -49,6 +49,7 @@ class JIT_kronbinations():
             self.return_as_dict = True
         else:
             self.array_vars_all = list(values)
+            self.array_vars_all_names = None
             self.return_as_dict = False
         for i, arr in enumerate(self.array_vars_all):
             # if does not have length, transform into array
@@ -60,7 +61,6 @@ class JIT_kronbinations():
             self.array_vars_names = [name for name, arr in zip(self.array_vars_all_names, self.array_vars_all) if len(arr) > 1]
         # add index values of the array vars 
         self.array_vars_indexes = [i for i, arr in enumerate(self.array_vars_all) if len(arr) > 1] 
-        #self.array_vars_indexes += [len(self.array_vars_all) + 1] # add one for the return value
 
         if self.return_as_dict:
             self.curr_vals = {key: arr[0] for key, arr in zip(self.array_vars_all_names, self.array_vars_all)}
@@ -171,9 +171,10 @@ class JIT_kronbinations():
         # find indexes where the JIT_Arrays are not done
         ind = np.where(is_not_done)
         # construct array from indexes, by concatenation
-        indexes = np.empty((len(ind[0]), len(ind)), dtype=int)
-        for i, index in enumerate(ind):
-            indexes[:, i] = index
+        indexes = np.array(ind).T
+        #indexes = np.empty((len(ind[0]), len(ind)), dtype=int)
+        #for i, index in enumerate(ind):
+        #indexes[:, i] = index
         self.calculate(indexes)
 
     def construct_vals_and_all_indexes(self, index):
@@ -188,10 +189,9 @@ class JIT_kronbinations():
 
     def setup_iterator(self, indexes):
         self.indexes = indexes
-        self.indexes_all = np.zeros((len(indexes), self.ndim_all), dtype=int)
         self.total_length = len(indexes)
-        last_indexes = -np.ones(self.ndim, dtype=int)
-        last_indexes_all = -np.ones(self.ndim_all, dtype=int)
+        last_indexes = tuple(-np.ones(self.ndim, dtype=int))
+        last_indexes_all = tuple(-np.ones(self.ndim_all, dtype=int))
         changed_var = np.ones(self.ndim_all, dtype=bool)
         if self.return_as_dict:
             self.last_indexes = last_indexes
@@ -205,7 +205,7 @@ class JIT_kronbinations():
 
     def __next__(self):
         self.curr_index += 1
-        curr_index = self.indexes[self.curr_index]
+        curr_index = tuple(self.indexes[self.curr_index])
         # construct current directions
         self.construct_vals_and_all_indexes(curr_index)
         last_values = self.curr_vals
@@ -330,9 +330,9 @@ b = np.linspace(0, 1, 5)
 c = 1.0
 
 def gridspace(k, A, B):
-    for i, c, v in k.kronprod(do_index=True, do_change=True):
-        A[i] = c[0]+c[1]+c[2]
-        B[i] = c[0]-c[1]
+    for i, v, c in k.kronprod(do_index=True, do_change=True):
+        A[i] = v[0]+v[1]+v[2]
+        B[i] = v[0]-v[1]
     return A, B
 
 k = JIT_kronbinations(a, b, c, func=gridspace, redo=False, progress=True) 

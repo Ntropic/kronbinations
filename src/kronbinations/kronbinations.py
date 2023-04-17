@@ -22,6 +22,7 @@ class kronbinations():
         else:
             self.array_vars_all = list(values)
             self.return_as_dict = False
+            self.array_vars_all_names = None
         for i, arr in enumerate(self.array_vars_all):
             # if does not have length, transform into array
             if not hasattr(arr, '__len__'):
@@ -70,41 +71,6 @@ class kronbinations():
         return Kron_Array(self.array_lengths, 'full', *var, **args)
     def random(self, *var, **args):
         return Kron_Array(self.array_lengths, 'random', *var, **args)
-    def randint(self, *var, **args): #if size in args: -> first var is shape
-        if 'size' in args:
-            size = args['size']
-            #remove element
-            del args['size']
-            var2 = [size] + list(var)
-            return Kron_Array(self.array_lengths, 'randint', *var2, **args)
-        else:
-            return Kron_Array(self.array_lengths, 'randint', *var, **args)
-    def rng(self, rng_fun=np.random.default_rng().random, *var, **args):
-        rng_fun = args['rng_fun']
-        del args['rng_fun']
-        if 'size' in args:
-            size = args['size']
-            #remove element
-            del args['size']
-            var2 = [size] + list(var)
-            return Kron_Array(self.array_lengths, 'rng', *var2, **args, rng_fun=rng_fun)
-        else:
-            return Kron_Array(self.array_lengths, 'rng', *var, **args, rng_fun=rng_fun)
-
-    #def empty(self, *var, **args):
-    #    return np.empty(self.array_lengths, *var, **args)
-    #def ones(self, *var, **args):
-    #    return np.ones(self.array_lengths, *var, **args)
-    #def zeros(self, *var, **args):
-    #    return np.zeros(self.array_lengths, *var, **args)
-    #def full(self, *var, **args):
-    #    return np.full(self.array_lengths, *var, **args)
-    #def random(self, *var, **args):
-    #    return np.random.random(self.array_lengths, *var, **args)
-    #def randint(self, *var, **args):
-    #    return np.random.randint(*var,  size=self.array_lengths, **args)
-    #def rng(self, rng_fun=np.random.default_rng().random, *var, **args):
-    #    return rng_fun(*var, size=self.array_lengths, **args)
 
     def set(self, **args):
         key_substitution_list = [['index', 'do_index'], ['change', 'do_change'], ['progress', 'do_tqdm']]
@@ -179,6 +145,7 @@ class kronbinations():
             self.changed_var = changed_var
         if self.do_tqdm:
             self.loop.update(1)
+        
         return self.last_values, self.last_indexes, self.changed_var
 
     def kronprod(self, **args):
@@ -275,3 +242,23 @@ class kronbinations():
             for j in range(self.ndim_all):
                 array_vars_all[j][i] = v[j]
         return array_vars_all
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

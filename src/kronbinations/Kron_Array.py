@@ -36,14 +36,6 @@ class Kron_Array(np.ndarray):   # Like JIT_Array but without saving and loading
             obj = np.full(shape, *args, **kwargs).view(cls)
         elif type=='empty':
             obj = np.empty(shape, *args, **kwargs).view(cls)
-        elif type=='random':
-            obj = np.random.random(shape, *args, **kwargs).view(cls)
-        elif type=='randint':
-            obj = np.random.randint(*args, size=shape, **kwargs).view(cls)
-        elif type=='rng':
-            #find rng_fun in kwargs
-            rng_fun = kwargs.pop('rng_fun').view(cls)
-            obj = rng_fun(*args, size=shape, **kwargs)
         else:
             raise ValueError('type not recognized')
         obj.added_shape = added_shape # did we add to the shape of the parent
