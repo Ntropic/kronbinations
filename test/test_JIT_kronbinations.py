@@ -13,7 +13,7 @@ def test_kronbinations_matrices():
     # Create a kronbinations object
     # with the lists as values
     def fun(k, A, B):
-        for i, v in k.kronprod(change=False):
+        for i, v in k.kronprod(change=False, redo=False):
             A[i] = v[0]+v[1]+i[2]
             B[i] = v[0]-v[1]
         return A, B
@@ -41,7 +41,7 @@ def test_kronbinations_loop_outputs():
             if how_many == 0:
                 how_many = 2 # elements of the values tuple - 1
                 def funny(k, A):
-                    for output in k.kronprod(index=index, change=change, progress=False):
+                    for output in k.kronprod(index=index, change=change, progress=False, redo=False):
                         assert len(output) == how_many+1
                 k = JIT_kronbinations(floats, ints, strings, func=funny)
                 A = k.zeros()
@@ -50,7 +50,7 @@ def test_kronbinations_loop_outputs():
 def test_krombinations_intermediate_outputs():
     # Check the intermediate outputs
     def funny(k, A):
-        for i,v,c in k.kronprod(index=True, change=True, progress=False):
+        for i,v,c in k.kronprod(index=True, change=True, progress=False, redo=False):
             assert k.changed() == c
             assert k.index() == i # works since switching to tuples
             assert k.value() == v
@@ -68,7 +68,7 @@ def test_krombinations_settings_and_changes_to_them():
             A[i] = v[0]+v[1]+i[2]
             B[i] = v[0]-v[1]
         return A, B
-    k = JIT_kronbinations(floats, ints, strings, func=fun)
+    k = JIT_kronbinations(floats, ints, strings, func=fun, redo=False)
     k.set(do_index=True, do_change=True, do_tqdm=True)
     do_index, do_change, do_tqdm, return_as_dict = k.get('do_index', 'do_change', 'do_tqdm', 'return_as_dict')
     assert do_index
@@ -83,19 +83,19 @@ def test_krombinations_settings_and_changes_to_them():
 def test_kronbinations_illegal_dict_outputs():
     # Check the illegal dictionary outputs
     def funny(k, A):
-        for i,v,c in k.kronprod(index=True, change=True, progress=False):
+        for i,v,c in k.kronprod(index=True, change=True, progress=False, redo=False):
             k.index('floats')
     k = JIT_kronbinations(floats, ints, strings, func=funny)
     k.empty()
     
     def funny2(k, A):
-        for i,v,c in k.kronprod(index=True, change=True, progress=False):
+        for i,v,c in k.kronprod(index=True, change=True, progress=False, redo=False):
             k.value('floats')
     k2 = JIT_kronbinations(floats, ints, strings, func=funny2)
     k2.empty()
     
     def funny3(k, A):
-        for i,v,c in k.kronprod(index=True, change=True, progress=False):
+        for i,v,c in k.kronprod(index=True, change=True, progress=False, redo=False):
             k.changed('floats')
     k3 = JIT_kronbinations(floats, ints, strings, func=funny3)
     k3.empty()
@@ -113,7 +113,7 @@ def test_kronbinations_dict_objects():
     keys = ['floats', 'ints', 'strings']
     d = {'floats': floats, 'ints': ints, 'strings': strings}
     def funny(k, A):
-        for i,v,c in k.kronprod(index=True, change=True, progress=False):
+        for i,v,c in k.kronprod(index=True, change=True, progress=False, redo=False):
             for j, key in enumerate(keys):
                 assert k.changed(key) == c[key]
                 assert k.index(key) == i[j]
