@@ -2,58 +2,109 @@
 import numpy as np
 import itertools
 from tqdm import tqdm
+from .Kron_Array import *
+
 class kronbinations():
     # A class for scanning parameter landscapes
     # creates iterators over multiple parameters via kronecker products (itertools product), 
     # automatizes the construction of arrays to sotore results on the landscape, simplifies indexing 
     # while keeping the ability to add functions that get only executed in a specific subloop by tracking when a variable is changed
 
-    def __init__(self, *values):
+    def __init__(self, *values, **kwargs):
         # If values is a dictionary, also store the keys, so that change can be outputted by key
         if isinstance(values[0], dict):
             if len(values) > 1:
                 raise ValueError('If values is a dictionary, it must be the only argument')
-            self.keys = list(values[0].keys())
-            values = list(values[0].values())
+            values = values[0]
+            self.array_vars_all_names = list(values.keys())
+            self.array_vars_all = list(values.values())
             self.return_as_dict = True
         else:
-            self.keys = None
+            self.array_vars_all = list(values)
             self.return_as_dict = False
-        # Define variables and iterators
-        self.values_var = values
-        self.lengths = [len(v) for v in self.values_var]
-        n = len(self.lengths)
-        self.ndims = n
-        self.index_list = [np.arange(len(v)) for v in self.values_var]
-        self.total_length = np.prod(self.lengths)
+        for i, arr in enumerate(self.array_vars_all):
+            # if does not have length, transform into array
+            if not hasattr(arr, '__len__'):
+                self.array_vars_all[i] = np.array([arr])
+        # only relevant values in array_directions
+        self.array_vars = [arr for arr in self.array_vars_all if len(arr) > 1]
+        if isinstance(values, dict):
+            self.array_vars_names = [name for name, arr in zip(self.array_vars_all_names, self.array_vars_all) if len(arr) > 1]
+        # add index values of the array vars 
+        self.array_vars_indexes = [i for i, arr in enumerate(self.array_vars_all) if len(arr) > 1] 
+        #self.array_vars_indexes += [len(self.array_vars_all) + 1] # add one for the return value
+
+        if self.return_as_dict:
+            self.curr_vals = {key: arr[0] for key, arr in zip(self.array_vars_all_names, self.array_vars_all)}
+        else:
+            self.curr_vals = [arr[0] for arr in self.array_vars_all]
+
+        self.array_lengths_all = [len(arr) for arr in self.array_vars_all]
+        self.array_lengths = [len(arr) for arr in self.array_vars]
+        self.shape_all = tuple(self.array_lengths_all)
+        self.shape = tuple(self.array_lengths)
+        self.ndim_all = len(self.array_lengths_all)
+        self.ndim = len(self.array_lengths)
+        self.total_length = np.prod(self.array_lengths)
+        self.size_all = np.prod(self.array_lengths_all)
+        self.size = np.prod(self.array_lengths)
+
+        self.index_list = [np.arange(len(v)) for v in self.array_vars]
+        self.index_list_all = [np.arange(len(v)) for v in self.array_vars_all]
         # Define the iterators
         self.setup_iterator()
 
-        self.do_index = False
-        self.do_change = False
-        self.do_tqdm = False
+        self.do_index = True
+        self.do_change = True
+        self.do_tqdm = True
+        self.set(**kwargs)   # redo these values if passed as kwargs
 
-    def size(self):
-        return self.total_length
-    def shape(self):
-        return tuple(self.lengths)
-    def ndim(self):
-        return self.ndims
 
     def empty(self, *var, **args):
-        return np.empty(self.lengths, *var, **args)
+        return Kron_Array(self.array_lengths, 'empty', *var, **args)
     def ones(self, *var, **args):
-        return np.ones(self.lengths, *var, **args)
+        return Kron_Array(self.array_lengths, 'ones', *var, **args)
     def zeros(self, *var, **args):
-        return np.zeros(self.lengths, *var, **args)
+        return Kron_Array(self.array_lengths, 'zeros', *var, **args)
     def full(self, *var, **args):
-        return np.full(self.lengths, *var, **args)
+        return Kron_Array(self.array_lengths, 'full', *var, **args)
     def random(self, *var, **args):
-        return np.random.random(self.lengths, *var, **args)
-    def randint(self, *var, **args):
-        return np.random.randint(*var,  size=self.lengths, **args)
+        return Kron_Array(self.array_lengths, 'random', *var, **args)
+    def randint(self, *var, **args): #if size in args: -> first var is shape
+        if 'size' in args:
+            size = args['size']
+            #remove element
+            del args['size']
+            var2 = [size] + list(var)
+            return Kron_Array(self.array_lengths, 'randint', *var2, **args)
+        else:
+            return Kron_Array(self.array_lengths, 'randint', *var, **args)
     def rng(self, rng_fun=np.random.default_rng().random, *var, **args):
-        return rng_fun(*var, size=self.lengths, **args)
+        rng_fun = args['rng_fun']
+        del args['rng_fun']
+        if 'size' in args:
+            size = args['size']
+            #remove element
+            del args['size']
+            var2 = [size] + list(var)
+            return Kron_Array(self.array_lengths, 'rng', *var2, **args, rng_fun=rng_fun)
+        else:
+            return Kron_Array(self.array_lengths, 'rng', *var, **args, rng_fun=rng_fun)
+
+    #def empty(self, *var, **args):
+    #    return np.empty(self.array_lengths, *var, **args)
+    #def ones(self, *var, **args):
+    #    return np.ones(self.array_lengths, *var, **args)
+    #def zeros(self, *var, **args):
+    #    return np.zeros(self.array_lengths, *var, **args)
+    #def full(self, *var, **args):
+    #    return np.full(self.array_lengths, *var, **args)
+    #def random(self, *var, **args):
+    #    return np.random.random(self.array_lengths, *var, **args)
+    #def randint(self, *var, **args):
+    #    return np.random.randint(*var,  size=self.array_lengths, **args)
+    #def rng(self, rng_fun=np.random.default_rng().random, *var, **args):
+    #    return rng_fun(*var, size=self.array_lengths, **args)
 
     def set(self, **args):
         key_substitution_list = [['index', 'do_index'], ['change', 'do_change'], ['progress', 'do_tqdm']]
@@ -63,7 +114,7 @@ class kronbinations():
             # Substitute certain keys from substitution list
             if key in key_list:
                 key = subs_list[key_list.index(key)]
-            if (key == 'return_as_dict' and value==True) and not isinstance(self.keys, list):
+            if (key == 'return_as_dict' and value==True) and not isinstance(self.array_vars_all_names, list):
                 raise ValueError('Keys are not defined, must create Object via dictionary in order to set "return_as_dict = True".')
             else:
                 setattr(self, key, value)
@@ -76,38 +127,58 @@ class kronbinations():
             if key in key_list:
                 key = subs_list[key_list.index(key)]
             x.append(getattr(self, key))
-        return x
+        if len(x) == 1:
+            return x[0]
+        else:
+            return x
+
+    def __getitem__(self, key):
+        # If the key is not in the data, return None
+        if key in key_list:
+            key = subs_list[key_list.index(key)]
+            print(key)
+        if key not in self.data:
+            return None
+        else:
+            return self.data[key]
 
     def setup_iterator(self):
-        self.product = itertools.product(*self.values_var)
+        self.product = itertools.product(*self.array_vars_all)
         self.indexes = itertools.product(*self.index_list)
+        self.indexes_all = itertools.product(*self.index_list_all)
 
-        last_indexes = -np.ones(self.ndims, dtype=int)
-        last_values = [v[0] for v in self.values_var]
-        changed_var = np.zeros(self.ndims, dtype=bool)
+        last_indexes = -np.ones(self.ndim, dtype=int)
+        last_indexes_all = -np.ones(self.ndim_all, dtype=int)
+        last_values = [v[0] for v in self.array_vars_all]
+        changed_var = np.zeros(self.ndim_all, dtype=bool)
         if self.return_as_dict:
-            self.last_values = dict(zip(self.keys, last_values))
-            self.last_indexes = dict(zip(self.keys, last_indexes))
-            self.changed_var = dict(zip(self.keys, changed_var))
+            self.last_values = dict(zip(self.array_vars_all_names, last_values))
+            self.last_indexes = last_indexes
+            self.last_indexes_all = last_indexes_all
+            self.changed_var = dict(zip(self.array_vars_all_names, changed_var))
         else:   
             self.last_values = last_values
             self.last_indexes = last_indexes
+            self.last_indexes_all = last_indexes_all
             self.changed_var = changed_var
 
     def __next__(self):
         last_values = next(self.product)
         curr_index = next(self.indexes)
-        changed_var = tuple(np.not_equal(curr_index, self.last_indexes))
-        if self.do_tqdm:
-            self.loop.update(1)
+        curr_index_all = next(self.indexes_all)
+        changed_var = tuple(np.not_equal(curr_index_all, self.last_indexes_all))
         if self.return_as_dict:
-            self.last_values = dict(zip(self.keys, last_values))
-            self.last_indexes = dict(zip(self.keys, curr_index))
-            self.changed_var = dict(zip(self.keys, changed_var))
+            self.last_values = dict(zip(self.array_vars_all_names, last_values))
+            self.last_indexes = curr_index
+            self.last_indexes_all = curr_index_all
+            self.changed_var = dict(zip(self.array_vars_all_names, changed_var))
         else:   
             self.last_values = last_values
             self.last_indexes = curr_index
+            self.last_indexes_all = curr_index_all
             self.changed_var = changed_var
+        if self.do_tqdm:
+            self.loop.update(1)
         return self.last_values, self.last_indexes, self.changed_var
 
     def kronprod(self, **args):
@@ -116,20 +187,20 @@ class kronbinations():
             self.loop = tqdm(range(self.total_length))
         if self.do_index:
             if self.do_change:
-                for i in range(self.total_length):
+                for n in range(self.total_length):
                     v,i,c = next(self)
                     yield i, v, c
             else:
-                for i in range(self.total_length):
+                for n in range(self.total_length):
                     v,i,_ = next(self)
                     yield i, v
         else:
             if self.do_change: 
-                for i in range(self.total_length):
+                for n in range(self.total_length):
                     v,_,c = next(self)
                     yield v, c
-            else:
-                for i in range(self.total_length):
+            else:  
+                for n in range(self.total_length):
                     v,_,_ = next(self)
                     yield v
         if self.do_tqdm:
@@ -140,9 +211,13 @@ class kronbinations():
         if elem is None:
             return self.changed_var
         elif isinstance(elem, int):
-            return self.changed_var[elem]
+            if self.return_as_dict:
+                string = self.array_vars_all_names[elem]
+                return self.changed_var[string]
+            else:
+                return self.changed_var[elem]
         elif isinstance(elem, str): # Outputs changed by key
-            if isinstance(self.keys, list):
+            if isinstance(self.array_vars_all_names, list):
                 return self.changed_var[elem]
             else:
                 raise ValueError('Keys are not defined, must create Object via dictionary for this functionality.')
@@ -153,8 +228,9 @@ class kronbinations():
         elif isinstance(elem, int):
             return self.last_indexes[elem]
         elif isinstance(elem, str): # By key
-            if isinstance(self.keys, list):
-                return self.last_indexes[elem]
+            if isinstance(self.array_vars_all_names, list):
+                ind = self.array_vars_all_names.index(elem)
+                return self.last_indexes_all[ind]
             else:
                 raise ValueError('Keys are not defined, must create Object via dictionary for this functionality.')
 
@@ -162,9 +238,40 @@ class kronbinations():
         if elem is None:
             return self.last_values
         elif isinstance(elem, int):
-            return self.last_values[elem]
+            # is dictionary?
+            if self.return_as_dict:
+                string = self.array_vars_all_names[elem]
+                return self.last_values[string]
+            else:
+                return self.last_values[elem]
         elif isinstance(elem, str):
-            if isinstance(self.keys, list):
+            if isinstance(self.array_vars_all_names, list):
                 return self.last_values[elem]
             else:
                 raise ValueError('Keys are not defined, must create Object via dictionary for this functionality.')
+    
+    def output_definition_kronprod(self, **args):
+        self.set(**args)
+        i = 'index'
+        v = 'value'
+        c = 'change'
+        if self.do_index:
+            if self.do_change:
+                return i, v, c
+            else:
+                return i, v
+        else:
+            if self.do_change: 
+                return v, c
+            else:
+                return v, 
+
+    def all_combinations_array(self):
+        # Generate an array for every combination of the input arrays
+        # initialize arrays
+        array_vars_all = [self.empty(dtype=self.array_vars_all[i].dtype) for i in range(self.ndim_all)]
+        # loop over all combinations
+        for i, v in self.kronprod(change=False):
+            for j in range(self.ndim_all):
+                array_vars_all[j][i] = v[j]
+        return array_vars_all
