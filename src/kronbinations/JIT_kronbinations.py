@@ -21,7 +21,7 @@ class JIT_kronbinations():
     def __init__(self, *values, func=None, other_func=[], import_statements=[], other_arguments=[], checksum=None, autosave=True, data_dir='Cache', redo=False, progress=True, **kwargs):
         # Calculate checksums
         if checksum is None:
-            checksum = self.checksum(*values, *import_statements, *other_arguments)
+            checksum, old_checksum = self.checksum(*values, *import_statements, *other_arguments)
         self.checksum = checksum
         # check if data_dir exists
         if not os.path.exists(data_dir):
@@ -249,32 +249,34 @@ class JIT_kronbinations():
 
     def kronprod(self, **args):
         self.set(**args)
+        if self.do_tqdm and self.total_length > 1:
+            self.loop = tqdm(range(self.total_length))
         if self.do_index:
             if self.do_change:
                 for n in range(self.total_length):
                     v,i,c = next(self)
                     yield tuple(i), v, c
                     if self.do_tqdm and self.total_length > 1:
-                        self.loop = tqdm(range(self.total_length))
+                        self.loop.update(1)
             else:
                 for n in range(self.total_length):
                     v,i,_ = next(self)
                     yield tuple(i), v
                     if self.do_tqdm and self.total_length > 1:
-                        self.loop = tqdm(range(self.total_length))
+                        self.loop.update(1)
         else:
             if self.do_change: 
                 for n in range(self.total_length):
                     v,_,c = next(self)
                     yield v, c
                     if self.do_tqdm and self.total_length > 1:
-                        self.loop = tqdm(range(self.total_length))
+                        self.loop.update(1)
             else:
                 for n in range(self.total_length):
                     v,_,_ = next(self)
                     yield v
                     if self.do_tqdm and self.total_length > 1:
-                        self.loop = tqdm(range(self.total_length))
+                        self.loop.update(1)
         if self.do_tqdm and self.total_length > 1:
             self.loop.close()
 
