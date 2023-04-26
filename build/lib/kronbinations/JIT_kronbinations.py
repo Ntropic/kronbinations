@@ -251,7 +251,7 @@ class JIT_kronbinations():
                     yield v
                     if self.do_tqdm and self.total_length > 1:
                         self.loop = tqdm(range(self.total_length))
-        if self.do_tqdm:
+        if self.do_tqdm and self.total_length > 1:
             self.loop.close()
 
     def changed(self, elem=None):
