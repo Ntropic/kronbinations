@@ -111,8 +111,32 @@ class JIT_kronbinations():
         else:
             return x
 
+    def change_all_dtype(self, object, dtype='int'):
+        # navigates through the objects lists tuples and dictionaries until it finds a numpy array 
+        # and changes the dtype if it is an integer to 'int'
+        if isinstance(object, (list, tuple, dict)):
+            # recursively call the function on the elements of the object
+            is_tuple = isinstance(object, tuple)
+            if is_tuple:
+                object = list(object)
+            if isinstance(object, dict):
+                # navigate every key value pair
+                for key, value in object.items():
+                    object[key] = self.change_all_dtype(value, dtype=dtype)
+            else: # isinstance(object, list):
+                for i in range(len(object)):
+                    object[i] = self.change_all_dtype(object[i], dtype=dtype)
+            if is_tuple:
+                object = tuple(object)
+        elif isinstance(object, np.ndarray):
+            if 'int' in str(object.dtype):
+                object = object.astype(dtype)
+        return object
+    
     def checksum(self, *args):
         # check every arg in args, if arg is an object of a class 
+        # change all dtype int
+        args = self.change_all_dtype(args)
         return sha1(str(args).encode('utf-8')).hexdigest()
 
     def __getitem__(self, key):
