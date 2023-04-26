@@ -21,7 +21,7 @@ class JIT_kronbinations():
     def __init__(self, *values, func=None, other_func=[], import_statements=[], other_arguments=[], checksum=None, autosave=True, data_dir='Cache', redo=False, progress=True, **kwargs):
         # Calculate checksums
         if checksum is None:
-            checksum, old_checksum = self.checksum(*values, *import_statements, *other_arguments)
+            checksum = self.checksum(*values, *import_statements, *other_arguments)
         self.checksum = checksum
         # check if data_dir exists
         if not os.path.exists(data_dir):
