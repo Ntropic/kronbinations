@@ -143,8 +143,6 @@ class kronbinations():
             self.last_indexes = curr_index
             self.last_indexes_all = curr_index_all
             self.changed_var = changed_var
-        if self.do_tqdm:
-            self.loop.update(1)
         
         return self.last_values, self.last_indexes, self.changed_var
 
@@ -157,19 +155,27 @@ class kronbinations():
                 for n in range(self.total_length):
                     v,i,c = next(self)
                     yield i, v, c
+                    if self.do_tqdm:
+                        self.loop.update(1)
             else:
                 for n in range(self.total_length):
                     v,i,_ = next(self)
                     yield i, v
+                    if self.do_tqdm:
+                        self.loop.update(1)
         else:
             if self.do_change: 
                 for n in range(self.total_length):
                     v,_,c = next(self)
                     yield v, c
+                    if self.do_tqdm:
+                        self.loop.update(1)
             else:  
                 for n in range(self.total_length):
                     v,_,_ = next(self)
                     yield v
+                    if self.do_tqdm:
+                        self.loop.update(1)
         if self.do_tqdm:
             self.loop.close()
         self.setup_iterator()

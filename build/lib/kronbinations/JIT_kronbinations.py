@@ -18,7 +18,7 @@ from .Kron_Fun_Modifier import *
 # and if so, what the values are
 # If values of the array are requested, and they have not been calculated, they are calculated using a function handle passed to the constructor
 class JIT_kronbinations():
-    def __init__(self, *values, func=None, other_func=[], import_statements=[], other_arguments=[], checksum=None, autosave=True, data_dir='Cache', redo=False, **kwargs):
+    def __init__(self, *values, func=None, other_func=[], import_statements=[], other_arguments=[], checksum=None, autosave=True, data_dir='Cache', redo=False, progress=True, **kwargs):
         # Calculate checksums
         if checksum is None:
             checksum = self.checksum(*values, *import_statements, *other_arguments)
@@ -78,7 +78,7 @@ class JIT_kronbinations():
 
         self.do_index = True
         self.do_change = True
-        self.do_tqdm = True
+        self.do_tqdm = progress
         self.redo = redo
         self.set(**kwargs)   # redo these values if passed as kwargs
     
@@ -112,6 +112,7 @@ class JIT_kronbinations():
             return x
 
     def checksum(self, *args):
+        # check every arg in args, if arg is an object of a class 
         return sha1(str(args).encode('utf-8')).hexdigest()
 
     def __getitem__(self, key):
@@ -220,34 +221,38 @@ class JIT_kronbinations():
             self.last_indexes = curr_index
             self.last_indexes_all = self.indexes_all
             self.changed_var = changed_var
-        if self.do_tqdm:
-            self.loop.update(1)
         return self.last_values, self.last_indexes, self.changed_var
 
     def kronprod(self, **args):
-            self.set(**args)
-            if self.do_tqdm:
-                self.loop = tqdm(range(self.total_length))
-            if self.do_index:
-                if self.do_change:
-                    for n in range(self.total_length):
-                        v,i,c = next(self)
-                        yield tuple(i), v, c
-                else:
-                    for n in range(self.total_length):
-                        v,i,_ = next(self)
-                        yield tuple(i), v
+        self.set(**args)
+        if self.do_index:
+            if self.do_change:
+                for n in range(self.total_length):
+                    v,i,c = next(self)
+                    yield tuple(i), v, c
+                    if self.do_tqdm and self.total_length > 1:
+                        self.loop = tqdm(range(self.total_length))
             else:
-                if self.do_change: 
-                    for n in range(self.total_length):
-                        v,_,c = next(self)
-                        yield v, c
-                else:
-                    for n in range(self.total_length):
-                        v,_,_ = next(self)
-                        yield v
-            if self.do_tqdm:
-                self.loop.close()
+                for n in range(self.total_length):
+                    v,i,_ = next(self)
+                    yield tuple(i), v
+                    if self.do_tqdm and self.total_length > 1:
+                        self.loop = tqdm(range(self.total_length))
+        else:
+            if self.do_change: 
+                for n in range(self.total_length):
+                    v,_,c = next(self)
+                    yield v, c
+                    if self.do_tqdm and self.total_length > 1:
+                        self.loop = tqdm(range(self.total_length))
+            else:
+                for n in range(self.total_length):
+                    v,_,_ = next(self)
+                    yield v
+                    if self.do_tqdm and self.total_length > 1:
+                        self.loop = tqdm(range(self.total_length))
+        if self.do_tqdm:
+            self.loop.close()
 
     def changed(self, elem=None):
         if elem is None:
