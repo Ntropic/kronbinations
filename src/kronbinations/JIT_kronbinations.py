@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import itertools
-from tqdm import tqdm
+from weighted_tqdm import weighted_kronbinations_tqdm, weighted_tqdm
 
 import inspect
 from hashlib import sha1
 import os
 import numpy as np
 import inspect
-import importlib
 
 # import JIT_Array and Kron_Fun_Modifier    
 from .JIT_Array import *
@@ -20,6 +18,7 @@ from .Kron_Fun_Modifier import *
 class JIT_kronbinations():
     def __init__(self, *values, func=None, other_func=[], import_statements=[], other_arguments=[], checksum=None, autosave=True, data_dir='Cache', redo=False, progress=True, **kwargs):
         # Calculate checksums
+        weights_given = True if 'weights' in kwargs.keys() else False
         if checksum is None:
             checksum = self.checksum(*values, *import_statements, *other_arguments)
         self.checksum = checksum
@@ -43,14 +42,37 @@ class JIT_kronbinations():
         if isinstance(values[0], dict):
             if len(values) > 1:
                 raise ValueError('If values is a dictionary, it must be the only argument')
-            values = values[0]
-            self.array_vars_all_names = list(values.keys())
-            self.array_vars_all = list(values.values())
+            input_values = values[0]
+            keys = input_values.keys()
+            values = input_values.values()
+            self.array_vars_all_names, self.array_vars_all, self.all_weights = [], [], []
+            for i, (key, value) in enumerate(zip(keys, values)):  
+                # check if value is a dict with value and weight
+                self.array_vars_all_names.append(key)
+                if isinstance(value, dict):
+                    if 'value' in value.keys():
+                        self.array_vars_all.append(value['value'])
+                    else:
+                        raise ValueError('If value is a dictionary, it must have a value key') 
+                    if 'weight' in value.keys():
+                        self.all_weights.append(value['weight'])
+                    else:
+                        self.all_weights.append(None)
+                else: # Normal 
+                    self.array_vars_all.append(value)
+                    if weights_given:
+                        self.all_weights.append(kwargs['weights'][i])
+                    else:
+                        self.all_weights.append(None)
             self.return_as_dict = True
         else:
             self.array_vars_all = list(values)
-            self.array_vars_all_names = None
+            if weights_given:
+                self.all_weights = list(kwargs['weights'])
+            else:
+                self.all_weights = [None] * len(self.array_vars_all)
             self.return_as_dict = False
+            self.array_vars_all_names = None
         for i, arr in enumerate(self.array_vars_all):
             # if does not have length, transform into array
             if not hasattr(arr, '__len__'):
@@ -81,7 +103,8 @@ class JIT_kronbinations():
         self.do_tqdm = progress
         self.redo = redo
         self.set(**kwargs)   # redo these values if passed as kwargs
-    
+        self.pbar = weighted_kronbinations_tqdm(self.array_vars, self.weights, self.size)
+        
         self.curr_index = -1
         self.func_modifier()
 
@@ -97,6 +120,8 @@ class JIT_kronbinations():
                 raise ValueError('Keys are not defined, must create Object via dictionary in order to set "return_as_dict = True".')
             else:
                 setattr(self, key, value)
+        if self.do_tqdm:
+            self.pbar = weighted_kronbinations_tqdm(self.array_vars, self.weights, self.size)
     def get(self, *args):
         key_substitution_list = [['index', 'do_index'], ['change', 'do_change'], ['progress', 'do_tqdm']]
         key_list = [v[0] for v in key_substitution_list]
@@ -250,35 +275,41 @@ class JIT_kronbinations():
     def kronprod(self, **args):
         self.set(**args)
         if self.do_tqdm and self.total_length > 1:
-            self.loop = tqdm(range(self.total_length))
+            self.pbar.init(np.array(list(itertools.product(*self.index_list))))
         if self.do_index:
             if self.do_change:
                 for n in range(self.total_length):
                     v,i,c = next(self)
                     yield tuple(i), v, c
                     if self.do_tqdm and self.total_length > 1:
-                        self.loop.update(1)
+                        self.pbar.increment()
             else:
                 for n in range(self.total_length):
                     v,i,_ = next(self)
                     yield tuple(i), v
                     if self.do_tqdm and self.total_length > 1:
-                        self.loop.update(1)
+                        self.pbar.increment()
         else:
             if self.do_change: 
                 for n in range(self.total_length):
                     v,_,c = next(self)
                     yield v, c
                     if self.do_tqdm and self.total_length > 1:
-                        self.loop.update(1)
+                        self.pbar.increment()
             else:
                 for n in range(self.total_length):
                     v,_,_ = next(self)
                     yield v
                     if self.do_tqdm and self.total_length > 1:
-                        self.loop.update(1)
+                        self.pbar.increment()
         if self.do_tqdm and self.total_length > 1:
-            self.loop.close()
+            self.pbar.close()
+            
+    def tqdm(self, iterator, weights=None, name='', **kwargs):
+        if self.do_tqdm:
+            yield self.pbar.sub_tqdm(iterator, weights=weights, name=name, **kwargs)
+        else:
+            yield weighted_tqdm(iterator, weights=weights, name=name, **kwargs)
 
     def changed(self, elem=None):
         if elem is None:
