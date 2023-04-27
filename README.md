@@ -74,5 +74,8 @@ B = k.zeros()
 plt.imshow(A.array())
 ```
 
+### Tricks
+You can use `k.tqdm(iterator)` in subloops which will lead to subiterations getting recognized und updated in the progress bar.
+
 ## Authors: 
 By Michael Schilling
