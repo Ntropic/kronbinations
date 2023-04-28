@@ -16,12 +16,12 @@ from .Kron_Fun_Modifier import *
 # and if so, what the values are
 # If values of the array are requested, and they have not been calculated, they are calculated using a function handle passed to the constructor
 class JIT_kronbinations():
-    def __init__(self, *values, func=None, other_func=[], import_statements=[], other_arguments=[], checksum=None, autosave=True, data_dir='Cache', redo=False, progress=True, **kwargs):
+    def __init__(self, *values, func=None, other_func=[], import_statements=[], other_arguments=[], checksum=None, checksum_pre='', autosave=True, data_dir='Cache', redo=False, progress=True, **kwargs):
         # Calculate checksums
         weights_given = True if 'weights' in kwargs.keys() else False
         if checksum is None:
             checksum = self.checksum(*values, *import_statements, *other_arguments)
-        self.checksum = checksum
+        self.checksum = checksum_pre + checksum
         # check if data_dir exists
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
