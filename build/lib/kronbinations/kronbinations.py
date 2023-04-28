@@ -211,9 +211,9 @@ class kronbinations():
         
     def tqdm(self, iterator, weights=None, name='', **kwargs):
         if self.do_tqdm:
-            yield self.pbar.sub_tqdm(iterator, weights=weights, name=name, **kwargs)
+            return self.pbar.sub_tqdm(iterator, weights=weights, name=name, **kwargs)
         else:
-            yield weighted_tqdm(iterator, weights=weights, name=name, **kwargs)
+            return weighted_tqdm(iterator, weights=weights, name=name, **kwargs)
 
     def changed(self, elem=None):
         if elem is None:
@@ -283,23 +283,6 @@ class kronbinations():
             for j in range(self.ndim_all):
                 array_vars_all[j][i] = v[j]
         return array_vars_all
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     
     

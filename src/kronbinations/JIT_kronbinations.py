@@ -83,7 +83,8 @@ class JIT_kronbinations():
             self.array_vars_names = [name for name, arr in zip(self.array_vars_all_names, self.array_vars_all) if len(arr) > 1]
         # add index values of the array vars 
         self.array_vars_indexes = [i for i, arr in enumerate(self.array_vars_all) if len(arr) > 1] 
-
+        self.weights = [w for i, w in enumerate(self.all_weights) if i in self.array_vars_indexes]
+        
         if self.return_as_dict:
             self.curr_vals = {key: arr[0] for key, arr in zip(self.array_vars_all_names, self.array_vars_all)}
         else:
@@ -275,7 +276,7 @@ class JIT_kronbinations():
     def kronprod(self, **args):
         self.set(**args)
         if self.do_tqdm and self.total_length > 1:
-            self.pbar.init(np.array(list(itertools.product(*self.index_list))))
+            self.pbar.init(self.indexes)
         if self.do_index:
             if self.do_change:
                 for n in range(self.total_length):
@@ -307,9 +308,9 @@ class JIT_kronbinations():
             
     def tqdm(self, iterator, weights=None, name='', **kwargs):
         if self.do_tqdm:
-            yield self.pbar.sub_tqdm(iterator, weights=weights, name=name, **kwargs)
+            return self.pbar.sub_tqdm(iterator, weights=weights, name=name, **kwargs)
         else:
-            yield weighted_tqdm(iterator, weights=weights, name=name, **kwargs)
+            return weighted_tqdm(iterator, weights=weights, name=name, **kwargs)
 
     def changed(self, elem=None):
         if elem is None:
