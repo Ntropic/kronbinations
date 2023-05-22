@@ -169,7 +169,6 @@ class JIT_kronbinations():
         # If the key is not in the data, return None
         if key in key_list:
             key = subs_list[key_list.index(key)]
-            print(key)
         if key not in self.data:
             return None
         else:

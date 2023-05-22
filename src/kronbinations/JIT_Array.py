@@ -11,15 +11,18 @@ class JIT_Array(np.ndarray):
         checksum = parent.checksum
         if name is None:
             name = type + str(parent.how_many_arrays_set)
-        filename = os.path.join(data_dir, checksum + '_' + name + '.npy')
+        filename = os.path.join(data_dir, checksum + '_' + name + '.npz')
         file_exists = os.path.isfile(filename)
         if file_exists and not redo:
             try:
-                var, done, how_many_missing = np.load(filename, allow_pickle=True)
-            except OSError:
-                print('Error: Loading file. ' +  filename)
+                with np.load(filename, allow_pickle=True) as f:
+                    var = f['var']
+                    calculated = f['calculated']
+                    how_many_missing = f['how_many_missing']
+            except:
+                raise Exception('Error loading file: ' + filename)
             obj = var.view(cls)
-            obj.calculated = done
+            obj.calculated = calculated
             obj.how_many_missing = how_many_missing
             shape_parent = parent.shape
             if len(obj.shape) > len(shape_parent):
@@ -78,15 +81,15 @@ class JIT_Array(np.ndarray):
         if not os.path.exists(self.data_dir):
             try:
                 os.makedirs(self.data_dir)
-            except OSError:
-                print('Error: Creating directory. ' +  self.data_dir)
+            except:
+                raise Exception('Error: Creating directory. ' +  self.data_dir)
         try:
             # ignore Warnings for saving
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                np.save(filename, (np.asarray(self), np.asarray(self.calculated), self.how_many_missing), allow_pickle=True)
-        except OSError:
-            print('Error: Saving file. ' +  filename)
+                np.savez(filename, var=np.asarray(self), calculated=np.asarray(self.calculated), how_many_missing=self.how_many_missing, allow_pickle=True)
+        except:
+            raise Exception('Error: Saving file. ' +  filename)
         self.file_exists = True
 
     def slice_to_tuple(self, s, array_shape):
