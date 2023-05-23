@@ -4,6 +4,7 @@ setup.cfg
 setup.py
 src/kronbinations/JIT_Array.py
 src/kronbinations/JIT_kronbinations.py
+src/kronbinations/JIT_kronbinations_load.py
 src/kronbinations/Kron_Array.py
 src/kronbinations/Kron_Fun_Modifier.py
 src/kronbinations/__init__.py

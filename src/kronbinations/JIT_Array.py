@@ -10,7 +10,7 @@ class JIT_Array(np.ndarray):
         data_dir = parent.data_dir
         checksum = parent.checksum
         if name is None:
-            name = type + str(parent.how_many_arrays_set)
+            name = 'array_' + str(parent.how_many_arrays_set)
         filename = os.path.join(data_dir, checksum + '_' + name + '.npz')
         file_exists = os.path.isfile(filename)
         if file_exists and not redo:
