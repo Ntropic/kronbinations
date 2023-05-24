@@ -277,12 +277,16 @@ class kronbinations():
     def all_combinations_array(self):
         # Generate an array for every combination of the input arrays
         # initialize arrays
-        array_vars_all = [self.empty(dtype=self.array_vars_all[i].dtype) for i in range(self.ndim_all)]
-        # loop over all combinations
-        for i, v in self.kronprod(change=False):
-            for j in range(self.ndim_all):
-                array_vars_all[j][i] = v[j]
+        array_vars_all = []
+        for i in range(self.ndim_all):
+            curr_param = self.array_vars_all[i] # if curr_param doesn't have length, then make it an array
+            if not hasattr(curr_param, '__len__'):
+                curr_param = np.array([curr_param])
+            curr_arr = np.empty(self.array_lengths_all, dtype=curr_param.dtype)
+            # loop over all combinations
+            for j in range(len(curr_param)):
+                curr_arr[(slice(None), ) * i + (j,) ] = curr_param[j]
+            array_vars_all.append(curr_arr)
         return array_vars_all
-    
     
     

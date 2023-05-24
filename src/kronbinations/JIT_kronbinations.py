@@ -19,13 +19,15 @@ class JIT_kronbinations():
     def __init__(self, *values, func=None, other_func=[], import_statements=[], other_arguments=[], checksum=None, checksum_pre='', autosave=True, data_dir='Cache', redo=False, progress=True, **kwargs):
         # Calculate checksums
         weights_given = True if 'weights' in kwargs.keys() else False
-        if checksum is None:
-            checksum = self.checksum(*values, *import_statements, *other_arguments)
-        self.checksum = checksum_pre + checksum
-        # check if data_dir exists
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
         self.data_dir = data_dir
+        if checksum is None:
+            self.checksum = self.make_checksum(checksum_pre, func, *values, *import_statements, *other_arguments)
+        else:
+            self.checksum = checksum
+        # check if data_dir exists
+        
         self.autosave = autosave
         self.func = func
         self.other_func = other_func
@@ -159,11 +161,33 @@ class JIT_kronbinations():
                 object = object.astype(dtype)
         return object
     
-    def checksum(self, *args):
+    def make_checksum(self, checksum_pre, func, *args):
         # check every arg in args, if arg is an object of a class 
         # change all dtype int
         args = self.change_all_dtype(args)
-        return sha1(str(args).encode('utf-8')).hexdigest()
+        checksum_sha1 = sha1(str(args).encode('utf-8')).hexdigest()
+        checksum_sin_fun = checksum_pre + checksum_sha1
+        # get function name from func
+        if func is not None:
+            func_name = func.__name__
+            checksum = checksum_pre + checksum_sha1 + func_name
+            # check if files with checksum exist
+            checksum_exists = False
+            dir_list = os.listdir(self.data_dir)
+            for file in dir_list:
+                if checksum in file:
+                    checksum_exists = True
+                    break
+            if not checksum_exists:
+                # check if files with checksum_sin_fun exists -> rename to checksum
+                for file in dir_list:
+                    if checksum_sin_fun in file:
+                        new_filename = file.replace(checksum_sin_fun, checksum)
+                        os.rename(os.path.join(self.data_dir, file), os.path.join(self.data_dir, new_filename))  
+                        print('  -> Renamed file from ' + file + ' to ' + new_filename)
+        else:
+            checksum = checksum_sin_fun
+        return checksum
 
     def __getitem__(self, key):
         # If the key is not in the data, return None
@@ -381,24 +405,17 @@ class JIT_kronbinations():
             func = fun_modifier.import_functions_from_file()
         self.func = func
 
-
-"""
-from kronbinations import *
-import numpy as np
-import matplotlib.pyplot as plt
-
-a = np.linspace(0, 1, 5)
-b = np.linspace(0, 1, 5)
-c = 1.0
-
-def gridspace(k, A, B):
-    for i, v, c in k.kronprod(do_index=True, do_change=True):
-        A[i] = v[0]+v[1]+v[2]
-        B[i] = v[0]-v[1]
-    return A, B
-
-k = JIT_kronbinations(a, b, c, func=gridspace, redo=False, progress=True) 
-A = k.zeros()
-B = k.zeros()
-plt.imshow(A.array())
-"""
+    def all_combinations_array(self):
+        # Generate an array for every combination of the input arrays
+        # initialize arrays
+        array_vars_all = []
+        for i in range(self.ndim_all):
+            curr_param = self.array_vars_all[i] # if curr_param doesn't have length, then make it an array
+            if not hasattr(curr_param, '__len__'):
+                curr_param = np.array([curr_param])
+            curr_arr = np.empty(self.array_lengths_all, dtype=curr_param.dtype)
+            # loop over all combinations
+            for j in range(len(curr_param)):
+                curr_arr[(slice(None), ) * i + (j,) ] = curr_param[j]
+            array_vars_all.append(curr_arr)
+        return array_vars_all

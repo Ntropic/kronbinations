@@ -11,15 +11,16 @@ import numpy as np
 # and if so, what the values are
 # If values of the array are requested, and they have not been calculated, they are calculated using a function handle passed to the constructor
 class JIT_kronbinations_load():
-    def __init__(self, *values, import_statements=[], other_arguments=[], checksum=None, checksum_pre='', data_dir='Cache', **kwargs):
+    def __init__(self, *values, func=None, import_statements=[], other_arguments=[], checksum=None, checksum_pre='', data_dir='Cache', **kwargs):
         # Calculate checksums
         self.data_dir = data_dir
-        if checksum is None:
-            checksum = self.checksum(*values, *import_statements, *other_arguments)
-        self.checksum = checksum_pre + checksum
         # check if data_dir exists
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
+        if checksum is None:
+            self.checksum = self.make_checksum(checksum_pre, func, *values, *import_statements, *other_arguments)
+        else:
+            self.checksum = checksum
         # Check if files with checksum exist
         filenames, var_names = self.filenames()
         n_filenames = len(filenames)
@@ -168,8 +169,29 @@ class JIT_kronbinations_load():
                 object = object.astype(dtype)
         return object
     
-    def checksum(self, *args):
+    def make_checksum(self, checksum_pre, func, *args):
         # check every arg in args, if arg is an object of a class 
         # change all dtype int
         args = self.change_all_dtype(args)
-        return sha1(str(args).encode('utf-8')).hexdigest()
+        checksum_sha1 = sha1(str(args).encode('utf-8')).hexdigest()
+        checksum_sin_fun = checksum_pre + checksum_sha1
+        # get function name from func
+        if func is not None:
+            func_name = func.__name__
+            checksum = checksum_pre + checksum_sha1 + func_name
+            # check if files with checksum exist
+            checksum_exists = False
+            dir_list = os.listdir(self.data_dir)
+            for file in dir_list:
+                if checksum in file:
+                    checksum_exists = True
+                    break
+            if not checksum_exists:
+                # check if files with checksum_sin_fun exists -> rename to checksum
+                for file in dir_list:
+                    if checksum_sin_fun in file:
+                        new_filename = file.replace(checksum_sin_fun, checksum)
+                        os.rename(os.path.join(self.data_dir, file), os.path.join(self.data_dir, new_filename))  
+        else:
+            checksum = checksum_sin_fun
+        return checksum
