@@ -75,7 +75,8 @@ plt.imshow(A.array())
 ```
 
 ### Tricks
-You can use `k.tqdm(iterator)` in subloops which will lead to subiterations getting recognized und updated in the progress bar.
+You can use `k.tqdm(iterator)` in subloops which will lead to subiterations getting recognized und updated in the progress bar. 
+NEW: `k.p_tqdm` can be used for parallel loop execution.
 
 ## Authors: 
 By Michael Schilling
