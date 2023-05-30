@@ -329,11 +329,17 @@ class JIT_kronbinations():
         if self.do_tqdm and self.total_length > 1:
             self.pbar.close()
             
-    def tqdm(self, iterator, weights=None, name='', **kwargs):
+    def tqdm(self, function, *iterator, weights=None, name='', **kwargs):
         if self.do_tqdm:
             return self.pbar.sub_tqdm(iterator, weights=weights, name=name, **kwargs)
         else:
             return weighted_tqdm(iterator, weights=weights, name=name, **kwargs)
+        
+    def p_tqdm(self, function, *iterator, weights=None, name='', **kwargs):
+        if self.do_tqdm:
+            return self.pbar.p_tqdm(function, *iterator, weights=weights, name=name, **kwargs)
+        else:
+            return weighted_p_tqdm(function, *iterator, weights=weights, name=name, **kwargs)
 
     def changed(self, elem=None):
         if elem is None:
