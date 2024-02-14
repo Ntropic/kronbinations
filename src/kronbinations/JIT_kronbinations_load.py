@@ -147,6 +147,7 @@ class JIT_kronbinations_load():
                 var_names.append(new_file)
         return filenames, var_names
     
+    
     def change_all_dtype(self, object, dtype='int'):
         # navigates through the objects lists tuples and dictionaries until it finds a numpy array 
         # and changes the dtype if it is an integer to 'int'
