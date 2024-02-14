@@ -106,7 +106,7 @@ class JIT_kronbinations():
         self.do_tqdm = progress
         self.redo = redo
         self.set(**kwargs)   # redo these values if passed as kwargs
-        self.pbar = weighted_kronbinations_tqdm(self.array_vars, self.weights, self.size)
+        self.pbar = weighted_kronbinations_tqdm(self.array_vars, self.weights)#, self.size)
         
         self.curr_index = -1
         self.func_modifier()
